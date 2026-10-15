@@ -26,6 +26,7 @@ export async function login({
 
   await page.waitForURL(`${serverURL}/admin`)
 
-  const dashboardArtifact = page.locator('span[title="Dashboard"]')
-  await expect(dashboardArtifact).toBeVisible()
+  // El admin de Payload está configurado en español.
+  const tablero = page.locator('span[title="Panel de Control"]')
+  await expect(tablero).toBeVisible()
 }

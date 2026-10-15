@@ -8,5 +8,8 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],
     include: ['tests/int/**/*.int.spec.ts'],
+    // Cada archivo levanta su propia instancia de Payload contra la misma base
+    // local de D1; en paralelo chocan dentro de miniflare. En serie es estable.
+    fileParallelism: false,
   },
 })

@@ -41,6 +41,11 @@
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    ".next",
+    ".open-next",
+    ".wrangler",
+    ".pnpm-store",
+    ".pnpm-cache"
   ]
 }

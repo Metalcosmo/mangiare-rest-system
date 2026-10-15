@@ -68,7 +68,23 @@ export interface Config {
   blocks: {};
   collections: {
     users: User;
+    turnos: Turno;
     media: Media;
+    categorias: Categoria;
+    productos: Producto;
+    'grupos-modificadores': GruposModificadore;
+    zonas: Zona;
+    mesas: Mesa;
+    'sesiones-mesa': SesionesMesa;
+    pedidos: Pedido;
+    ingredientes: Ingrediente;
+    proveedores: Proveedore;
+    'movimientos-inventario': MovimientosInventario;
+    clientes: Cliente;
+    recompensas: Recompensa;
+    cupones: Cupone;
+    campanas: Campana;
+    reservaciones: Reservacione;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -77,7 +93,23 @@ export interface Config {
   collectionsJoins: {};
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
+    turnos: TurnosSelect<false> | TurnosSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    categorias: CategoriasSelect<false> | CategoriasSelect<true>;
+    productos: ProductosSelect<false> | ProductosSelect<true>;
+    'grupos-modificadores': GruposModificadoresSelect<false> | GruposModificadoresSelect<true>;
+    zonas: ZonasSelect<false> | ZonasSelect<true>;
+    mesas: MesasSelect<false> | MesasSelect<true>;
+    'sesiones-mesa': SesionesMesaSelect<false> | SesionesMesaSelect<true>;
+    pedidos: PedidosSelect<false> | PedidosSelect<true>;
+    ingredientes: IngredientesSelect<false> | IngredientesSelect<true>;
+    proveedores: ProveedoresSelect<false> | ProveedoresSelect<true>;
+    'movimientos-inventario': MovimientosInventarioSelect<false> | MovimientosInventarioSelect<true>;
+    clientes: ClientesSelect<false> | ClientesSelect<true>;
+    recompensas: RecompensasSelect<false> | RecompensasSelect<true>;
+    cupones: CuponesSelect<false> | CuponesSelect<true>;
+    campanas: CampanasSelect<false> | CampanasSelect<true>;
+    reservaciones: ReservacionesSelect<false> | ReservacionesSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -87,8 +119,12 @@ export interface Config {
     defaultIDType: number;
   };
   fallbackLocale: null;
-  globals: {};
-  globalsSelect: {};
+  globals: {
+    ajustes: Ajuste;
+  };
+  globalsSelect: {
+    ajustes: AjustesSelect<false> | AjustesSelect<true>;
+  };
   locale: null;
   widgets: {
     collections: CollectionsWidget;
@@ -123,6 +159,22 @@ export interface UserAuthOperations {
  */
 export interface User {
   id: number;
+  nombre: string;
+  apellidos?: string | null;
+  rol: 'admin' | 'gerente' | 'cajero' | 'mesero' | 'cocina';
+  activo?: boolean | null;
+  /**
+   * Ej. Chef, Barista, Recepcionista
+   */
+  puesto?: string | null;
+  telefono?: string | null;
+  /**
+   * Costo por hora para el cálculo de nómina.
+   */
+  tarifaHora?: number | null;
+  fechaIngreso?: string | null;
+  avatar?: (number | null) | Media;
+  notas?: string | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -163,6 +215,477 @@ export interface Media {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "turnos".
+ */
+export interface Turno {
+  id: number;
+  empleado: number | User;
+  fecha: string;
+  horaInicio: string;
+  horaFin: string;
+  horasTotales?: number | null;
+  puesto: 'gerente' | 'cajero' | 'mesero' | 'cocina' | 'barra' | 'anfitrion';
+  estado: 'programado' | 'confirmado' | 'completado' | 'ausente';
+  notas?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categorias".
+ */
+export interface Categoria {
+  id: number;
+  nombre: string;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  descripcion?: string | null;
+  /**
+   * Un emoji, ej. 🍕 o 🍹
+   */
+  icono?: string | null;
+  imagen?: (number | null) | Media;
+  orden?: number | null;
+  activa?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "productos".
+ */
+export interface Producto {
+  id: number;
+  nombre: string;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  descripcion?: string | null;
+  categoria: number | Categoria;
+  /**
+   * Determina en qué pantalla del KDS aparece.
+   */
+  estacion: 'cocina' | 'parrilla' | 'barra' | 'postres' | 'mostrador';
+  precio: number;
+  /**
+   * Si se define, se muestra como oferta.
+   */
+  precioPromocional?: number | null;
+  imagen?: (number | null) | Media;
+  etiquetas?: ('vegetariano' | 'vegano' | 'sin_gluten' | 'sin_lactosa' | 'picante' | 'recomendado' | 'nuevo')[] | null;
+  alergenos?: ('gluten' | 'lacteos' | 'huevo' | 'frutos_secos' | 'mariscos' | 'pescado' | 'soya')[] | null;
+  /**
+   * La cantidad se expresa en la unidad que elijas.
+   */
+  receta?:
+    | {
+        ingrediente: number | Ingrediente;
+        cantidad: number;
+        /**
+         * Se convierte automáticamente a la unidad del inventario.
+         */
+        unidad?: ('g' | 'kg' | 'ml' | 'l' | 'unidad' | 'porcion') | null;
+        notas?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Se calcula solo a partir de la receta y el costo del inventario.
+   */
+  costoReceta?: number | null;
+  /**
+   * Sirve para repartir el costo de una preparación base.
+   */
+  rendimiento?: number | null;
+  controlaStock?: boolean | null;
+  /**
+   * Ej. término de cocción, extras, elección de bebida.
+   */
+  gruposModificadores?: (number | GruposModificadore)[] | null;
+  disponible?: boolean | null;
+  destacado?: boolean | null;
+  tiempoPreparacion?: number | null;
+  orden?: number | null;
+  sku?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ingredientes".
+ */
+export interface Ingrediente {
+  id: number;
+  nombre: string;
+  sku?: string | null;
+  unidad: 'g' | 'kg' | 'ml' | 'l' | 'unidad' | 'porcion';
+  categoria?: ('abarrote' | 'carnes' | 'vegetales' | 'lacteos' | 'bebidas' | 'desechables' | 'limpieza') | null;
+  /**
+   * Se actualiza automáticamente con cada movimiento.
+   */
+  stockActual?: number | null;
+  stockMinimo?: number | null;
+  stockMaximo?: number | null;
+  /**
+   * Costo de una unidad de inventario.
+   */
+  costoUnitario?: number | null;
+  proveedor?: (number | null) | Proveedore;
+  ubicacion?: string | null;
+  perecedero?: boolean | null;
+  vidaUtilDias?: number | null;
+  valorInventario?: number | null;
+  activo?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "proveedores".
+ */
+export interface Proveedore {
+  id: number;
+  nombre: string;
+  contacto?: string | null;
+  telefono?: string | null;
+  email?: string | null;
+  direccion?: string | null;
+  condicionesPago?: ('contado' | '15_dias' | '30_dias' | '60_dias') | null;
+  diasEntrega?: string | null;
+  notas?: string | null;
+  activo?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "grupos-modificadores".
+ */
+export interface GruposModificadore {
+  id: number;
+  /**
+   * Ej. "Término de la carne", "Extras", "Elige tu bebida"
+   */
+  nombre: string;
+  descripcion?: string | null;
+  tipo: 'unica' | 'multiple';
+  obligatorio?: boolean | null;
+  minSelecciones?: number | null;
+  maxSelecciones?: number | null;
+  /**
+   * Sólo informativo para recetas.
+   */
+  unidadReferencia?: ('g' | 'kg' | 'ml' | 'l' | 'unidad' | 'porcion') | null;
+  opciones?:
+    | {
+        nombre: string;
+        precioExtra?: number | null;
+        porDefecto?: boolean | null;
+        disponible?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "zonas".
+ */
+export interface Zona {
+  id: number;
+  nombre: string;
+  /**
+   * Ej. Terraza, Salón principal, Barra, Segundo piso
+   */
+  descripcion?: string | null;
+  color?: string | null;
+  orden?: number | null;
+  activa?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "mesas".
+ */
+export interface Mesa {
+  id: number;
+  /**
+   * Ej. "Mesa 5", "Barra 2", "Terraza 1"
+   */
+  nombre: string;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  zona?: (number | null) | Zona;
+  capacidad?: number | null;
+  forma?: ('cuadrada' | 'redonda' | 'rectangular' | 'barra') | null;
+  estado: 'libre' | 'ocupada' | 'reservada' | 'limpieza' | 'fuera_servicio';
+  activa?: boolean | null;
+  /**
+   * Porcentaje del ancho (0-100).
+   */
+  posicionX?: number | null;
+  /**
+   * Porcentaje del alto (0-100).
+   */
+  posicionY?: number | null;
+  notas?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Cuentas abiertas por los clientes desde el código QR. Se crean y se cierran solas.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sesiones-mesa".
+ */
+export interface SesionesMesa {
+  id: number;
+  mesa: number | Mesa;
+  /**
+   * Quien abrió la mesa.
+   */
+  anfitrionNombre?: string | null;
+  /**
+   * Normalizada: mayúsculas y sin puntos ni guiones.
+   */
+  anfitrionCedula?: string | null;
+  tokenAnfitrion?: string | null;
+  tokenInvitado?: string | null;
+  estado: 'abierta' | 'cerrada';
+  origen?: ('cliente' | 'mesero') | null;
+  motivoCierre?: ('cobrada' | 'manual') | null;
+  abiertaEn?: string | null;
+  cerradaEn?: string | null;
+  cerradaPor?: (number | null) | User;
+  notas?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pedidos".
+ */
+export interface Pedido {
+  id: number;
+  folio?: string | null;
+  canal: 'mesa' | 'mostrador' | 'para_llevar';
+  estado: 'borrador' | 'por_confirmar' | 'nuevo' | 'en_preparacion' | 'listo' | 'servido' | 'pagado' | 'cancelado';
+  mesa?: (number | null) | Mesa;
+  comensales?: number | null;
+  /**
+   * Cuenta abierta a la que pertenece este pedido.
+   */
+  sesion?: (number | null) | SesionesMesa;
+  /**
+   * Número de comanda dentro de la sesión.
+   */
+  ronda?: number | null;
+  turno?: ('desayuno' | 'comida' | 'cena') | null;
+  clienteNombre?: string | null;
+  clienteTelefono?: string | null;
+  cliente?: (number | null) | Cliente;
+  mesero?: (number | null) | User;
+  items: {
+    producto: number | Producto;
+    cantidad: number;
+    nombre?: string | null;
+    /**
+     * Se toma del catálogo al guardar.
+     */
+    precioUnitario?: number | null;
+    estacion?: ('cocina' | 'parrilla' | 'barra' | 'postres' | 'mostrador') | null;
+    modificadores?:
+      | {
+          nombre: string;
+          precioExtra?: number | null;
+          id?: string | null;
+        }[]
+      | null;
+    notas?: string | null;
+    estadoItem?: ('pendiente' | 'preparando' | 'listo') | null;
+    subtotal?: number | null;
+    id?: string | null;
+  }[];
+  notas?: string | null;
+  subtotal?: number | null;
+  descuento?: number | null;
+  impuesto?: number | null;
+  propina?: number | null;
+  total?: number | null;
+  costoEstimado?: number | null;
+  cupon?: (number | null) | Cupone;
+  pagos?:
+    | {
+        metodo: 'efectivo' | 'tarjeta' | 'transferencia' | 'puntos' | 'cortesia';
+        monto: number;
+        propina?: number | null;
+        referencia?: string | null;
+        fecha?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  horaEnvioCocina?: string | null;
+  horaListo?: string | null;
+  horaEntrega?: string | null;
+  horaCobro?: string | null;
+  horaRecogida?: string | null;
+  motivoCancelacion?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "clientes".
+ */
+export interface Cliente {
+  id: number;
+  nombre: string;
+  telefono?: string | null;
+  email?: string | null;
+  fechaNacimiento?: string | null;
+  puntos?: number | null;
+  /**
+   * Se calcula automáticamente.
+   */
+  nivel?: ('bronce' | 'plata' | 'oro' | 'platino') | null;
+  visitas?: number | null;
+  totalGastado?: number | null;
+  ticketPromedio?: number | null;
+  ultimaVisita?: string | null;
+  etiquetas?: ('vip' | 'frecuente' | 'nuevo' | 'inactivo' | 'cumpleanos' | 'corporativo' | 'delivery')[] | null;
+  aceptaMarketing?: boolean | null;
+  direccion?: string | null;
+  notas?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "cupones".
+ */
+export interface Cupone {
+  id: number;
+  /**
+   * Lo que el cliente escribe, ej. BIENVENIDO10
+   */
+  codigo: string;
+  descripcion?: string | null;
+  tipo: 'porcentaje' | 'monto';
+  valor: number;
+  minimoCompra?: number | null;
+  usosMaximos?: number | null;
+  usosActuales?: number | null;
+  validoDesde?: string | null;
+  validoHasta?: string | null;
+  canales?: ('mesa' | 'mostrador' | 'para_llevar')[] | null;
+  activo?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "movimientos-inventario".
+ */
+export interface MovimientosInventario {
+  id: number;
+  ingrediente: number | Ingrediente;
+  tipo: 'entrada' | 'salida' | 'ajuste' | 'merma' | 'consumo' | 'devolucion';
+  /**
+   * En "ajuste" es la existencia final deseada.
+   */
+  cantidad: number;
+  costoUnitario?: number | null;
+  motivo?: string | null;
+  pedido?: (number | null) | Pedido;
+  usuario?: (number | null) | User;
+  fecha: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "recompensas".
+ */
+export interface Recompensa {
+  id: number;
+  nombre: string;
+  descripcion?: string | null;
+  tipo: 'producto_gratis' | 'descuento_porcentaje' | 'descuento_monto' | 'puntos_extra';
+  costoPuntos: number;
+  /**
+   * Porcentaje o monto según el tipo.
+   */
+  valorDescuento?: number | null;
+  producto?: (number | null) | Producto;
+  imagen?: (number | null) | Media;
+  vigenciaDesde?: string | null;
+  vigenciaHasta?: string | null;
+  activa?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "campanas".
+ */
+export interface Campana {
+  id: number;
+  nombre: string;
+  canal: 'email' | 'sms' | 'whatsapp' | 'push';
+  segmento: 'todos' | 'vip' | 'frecuente' | 'inactivo' | 'cumpleanos' | 'nuevo';
+  asunto?: string | null;
+  /**
+   * Puedes usar {nombre} para personalizar.
+   */
+  mensaje?: string | null;
+  cupon?: (number | null) | Cupone;
+  estado: 'borrador' | 'programada' | 'enviada' | 'cancelada';
+  programadaPara?: string | null;
+  enviados?: number | null;
+  aperturas?: number | null;
+  clics?: number | null;
+  conversiones?: number | null;
+  ingresosGenerados?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reservaciones".
+ */
+export interface Reservacione {
+  id: number;
+  nombreCliente: string;
+  cliente?: (number | null) | Cliente;
+  telefono?: string | null;
+  email?: string | null;
+  fecha: string;
+  /**
+   * Formato 24h, ej. 20:30
+   */
+  hora: string;
+  personas: number;
+  mesa?: (number | null) | Mesa;
+  zona?: (number | null) | Zona;
+  estado: 'pendiente' | 'confirmada' | 'sentada' | 'completada' | 'cancelada' | 'no_asistio';
+  ocasion?: ('ninguna' | 'cumpleanos' | 'aniversario' | 'negocios' | 'celebracion') | null;
+  notas?: string | null;
+  creadaPor?: (number | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -190,8 +713,72 @@ export interface PayloadLockedDocument {
         value: number | User;
       } | null)
     | ({
+        relationTo: 'turnos';
+        value: number | Turno;
+      } | null)
+    | ({
         relationTo: 'media';
         value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'categorias';
+        value: number | Categoria;
+      } | null)
+    | ({
+        relationTo: 'productos';
+        value: number | Producto;
+      } | null)
+    | ({
+        relationTo: 'grupos-modificadores';
+        value: number | GruposModificadore;
+      } | null)
+    | ({
+        relationTo: 'zonas';
+        value: number | Zona;
+      } | null)
+    | ({
+        relationTo: 'mesas';
+        value: number | Mesa;
+      } | null)
+    | ({
+        relationTo: 'sesiones-mesa';
+        value: number | SesionesMesa;
+      } | null)
+    | ({
+        relationTo: 'pedidos';
+        value: number | Pedido;
+      } | null)
+    | ({
+        relationTo: 'ingredientes';
+        value: number | Ingrediente;
+      } | null)
+    | ({
+        relationTo: 'proveedores';
+        value: number | Proveedore;
+      } | null)
+    | ({
+        relationTo: 'movimientos-inventario';
+        value: number | MovimientosInventario;
+      } | null)
+    | ({
+        relationTo: 'clientes';
+        value: number | Cliente;
+      } | null)
+    | ({
+        relationTo: 'recompensas';
+        value: number | Recompensa;
+      } | null)
+    | ({
+        relationTo: 'cupones';
+        value: number | Cupone;
+      } | null)
+    | ({
+        relationTo: 'campanas';
+        value: number | Campana;
+      } | null)
+    | ({
+        relationTo: 'reservaciones';
+        value: number | Reservacione;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -240,6 +827,16 @@ export interface PayloadMigration {
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
+  nombre?: T;
+  apellidos?: T;
+  rol?: T;
+  activo?: T;
+  puesto?: T;
+  telefono?: T;
+  tarifaHora?: T;
+  fechaIngreso?: T;
+  avatar?: T;
+  notas?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -260,6 +857,22 @@ export interface UsersSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "turnos_select".
+ */
+export interface TurnosSelect<T extends boolean = true> {
+  empleado?: T;
+  fecha?: T;
+  horaInicio?: T;
+  horaFin?: T;
+  horasTotales?: T;
+  puesto?: T;
+  estado?: T;
+  notas?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
@@ -274,6 +887,355 @@ export interface MediaSelect<T extends boolean = true> {
   filesize?: T;
   width?: T;
   height?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categorias_select".
+ */
+export interface CategoriasSelect<T extends boolean = true> {
+  nombre?: T;
+  generateSlug?: T;
+  slug?: T;
+  descripcion?: T;
+  icono?: T;
+  imagen?: T;
+  orden?: T;
+  activa?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "productos_select".
+ */
+export interface ProductosSelect<T extends boolean = true> {
+  nombre?: T;
+  generateSlug?: T;
+  slug?: T;
+  descripcion?: T;
+  categoria?: T;
+  estacion?: T;
+  precio?: T;
+  precioPromocional?: T;
+  imagen?: T;
+  etiquetas?: T;
+  alergenos?: T;
+  receta?:
+    | T
+    | {
+        ingrediente?: T;
+        cantidad?: T;
+        unidad?: T;
+        notas?: T;
+        id?: T;
+      };
+  costoReceta?: T;
+  rendimiento?: T;
+  controlaStock?: T;
+  gruposModificadores?: T;
+  disponible?: T;
+  destacado?: T;
+  tiempoPreparacion?: T;
+  orden?: T;
+  sku?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "grupos-modificadores_select".
+ */
+export interface GruposModificadoresSelect<T extends boolean = true> {
+  nombre?: T;
+  descripcion?: T;
+  tipo?: T;
+  obligatorio?: T;
+  minSelecciones?: T;
+  maxSelecciones?: T;
+  unidadReferencia?: T;
+  opciones?:
+    | T
+    | {
+        nombre?: T;
+        precioExtra?: T;
+        porDefecto?: T;
+        disponible?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "zonas_select".
+ */
+export interface ZonasSelect<T extends boolean = true> {
+  nombre?: T;
+  descripcion?: T;
+  color?: T;
+  orden?: T;
+  activa?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "mesas_select".
+ */
+export interface MesasSelect<T extends boolean = true> {
+  nombre?: T;
+  generateSlug?: T;
+  slug?: T;
+  zona?: T;
+  capacidad?: T;
+  forma?: T;
+  estado?: T;
+  activa?: T;
+  posicionX?: T;
+  posicionY?: T;
+  notas?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sesiones-mesa_select".
+ */
+export interface SesionesMesaSelect<T extends boolean = true> {
+  mesa?: T;
+  anfitrionNombre?: T;
+  anfitrionCedula?: T;
+  tokenAnfitrion?: T;
+  tokenInvitado?: T;
+  estado?: T;
+  origen?: T;
+  motivoCierre?: T;
+  abiertaEn?: T;
+  cerradaEn?: T;
+  cerradaPor?: T;
+  notas?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pedidos_select".
+ */
+export interface PedidosSelect<T extends boolean = true> {
+  folio?: T;
+  canal?: T;
+  estado?: T;
+  mesa?: T;
+  comensales?: T;
+  sesion?: T;
+  ronda?: T;
+  turno?: T;
+  clienteNombre?: T;
+  clienteTelefono?: T;
+  cliente?: T;
+  mesero?: T;
+  items?:
+    | T
+    | {
+        producto?: T;
+        cantidad?: T;
+        nombre?: T;
+        precioUnitario?: T;
+        estacion?: T;
+        modificadores?:
+          | T
+          | {
+              nombre?: T;
+              precioExtra?: T;
+              id?: T;
+            };
+        notas?: T;
+        estadoItem?: T;
+        subtotal?: T;
+        id?: T;
+      };
+  notas?: T;
+  subtotal?: T;
+  descuento?: T;
+  impuesto?: T;
+  propina?: T;
+  total?: T;
+  costoEstimado?: T;
+  cupon?: T;
+  pagos?:
+    | T
+    | {
+        metodo?: T;
+        monto?: T;
+        propina?: T;
+        referencia?: T;
+        fecha?: T;
+        id?: T;
+      };
+  horaEnvioCocina?: T;
+  horaListo?: T;
+  horaEntrega?: T;
+  horaCobro?: T;
+  horaRecogida?: T;
+  motivoCancelacion?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ingredientes_select".
+ */
+export interface IngredientesSelect<T extends boolean = true> {
+  nombre?: T;
+  sku?: T;
+  unidad?: T;
+  categoria?: T;
+  stockActual?: T;
+  stockMinimo?: T;
+  stockMaximo?: T;
+  costoUnitario?: T;
+  proveedor?: T;
+  ubicacion?: T;
+  perecedero?: T;
+  vidaUtilDias?: T;
+  valorInventario?: T;
+  activo?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "proveedores_select".
+ */
+export interface ProveedoresSelect<T extends boolean = true> {
+  nombre?: T;
+  contacto?: T;
+  telefono?: T;
+  email?: T;
+  direccion?: T;
+  condicionesPago?: T;
+  diasEntrega?: T;
+  notas?: T;
+  activo?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "movimientos-inventario_select".
+ */
+export interface MovimientosInventarioSelect<T extends boolean = true> {
+  ingrediente?: T;
+  tipo?: T;
+  cantidad?: T;
+  costoUnitario?: T;
+  motivo?: T;
+  pedido?: T;
+  usuario?: T;
+  fecha?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "clientes_select".
+ */
+export interface ClientesSelect<T extends boolean = true> {
+  nombre?: T;
+  telefono?: T;
+  email?: T;
+  fechaNacimiento?: T;
+  puntos?: T;
+  nivel?: T;
+  visitas?: T;
+  totalGastado?: T;
+  ticketPromedio?: T;
+  ultimaVisita?: T;
+  etiquetas?: T;
+  aceptaMarketing?: T;
+  direccion?: T;
+  notas?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "recompensas_select".
+ */
+export interface RecompensasSelect<T extends boolean = true> {
+  nombre?: T;
+  descripcion?: T;
+  tipo?: T;
+  costoPuntos?: T;
+  valorDescuento?: T;
+  producto?: T;
+  imagen?: T;
+  vigenciaDesde?: T;
+  vigenciaHasta?: T;
+  activa?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "cupones_select".
+ */
+export interface CuponesSelect<T extends boolean = true> {
+  codigo?: T;
+  descripcion?: T;
+  tipo?: T;
+  valor?: T;
+  minimoCompra?: T;
+  usosMaximos?: T;
+  usosActuales?: T;
+  validoDesde?: T;
+  validoHasta?: T;
+  canales?: T;
+  activo?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "campanas_select".
+ */
+export interface CampanasSelect<T extends boolean = true> {
+  nombre?: T;
+  canal?: T;
+  segmento?: T;
+  asunto?: T;
+  mensaje?: T;
+  cupon?: T;
+  estado?: T;
+  programadaPara?: T;
+  enviados?: T;
+  aperturas?: T;
+  clics?: T;
+  conversiones?: T;
+  ingresosGenerados?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reservaciones_select".
+ */
+export interface ReservacionesSelect<T extends boolean = true> {
+  nombreCliente?: T;
+  cliente?: T;
+  telefono?: T;
+  email?: T;
+  fecha?: T;
+  hora?: T;
+  personas?: T;
+  mesa?: T;
+  zona?: T;
+  estado?: T;
+  ocasion?: T;
+  notas?: T;
+  creadaPor?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -314,6 +1276,120 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ajustes".
+ */
+export interface Ajuste {
+  id: number;
+  nombreComercial: string;
+  eslogan?: string | null;
+  logo?: (number | null) | Media;
+  /**
+   * Formato hexadecimal, ej. #c2410c
+   */
+  colorPrimario?: string | null;
+  colorSecundario?: string | null;
+  telefono?: string | null;
+  email?: string | null;
+  direccion?: string | null;
+  instagram?: string | null;
+  moneda?: ('MXN' | 'COP' | 'ARS' | 'EUR' | 'USD' | 'PEN' | 'CLP') | null;
+  simboloMoneda?: string | null;
+  impuestoPorcentaje?: number | null;
+  impuestoIncluido?: boolean | null;
+  servicioPorcentaje?: number | null;
+  propinasSugeridas?:
+    | {
+        valor: number;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Ej. 1 = un punto por cada $1 gastado.
+   */
+  puntosPorUnidad?: number | null;
+  valorPunto?: number | null;
+  tiempoEstimadoMinutos?: number | null;
+  aceptaPedidos?: boolean | null;
+  /**
+   * Si está activo, un pedido hecho por el cliente desde el código QR no llega a cocina hasta que un mesero lo aprueba. Los pedidos que levanta el personal siempre van directo a cocina.
+   */
+  requiereAprobacionMesa?: boolean | null;
+  aforoMaximo?: number | null;
+  horarios?:
+    | {
+        dia: 'lunes' | 'martes' | 'miercoles' | 'jueves' | 'viernes' | 'sabado' | 'domingo';
+        abre?: string | null;
+        cierra?: string | null;
+        cerrado?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  mensajeBienvenida?: string | null;
+  mensajePie?: string | null;
+  /**
+   * Ej. "El servicio puede tardar un poco más hoy".
+   */
+  notaServicio?: string | null;
+  permitirPropinaCliente?: boolean | null;
+  encabezadoTicket?: string | null;
+  pieTicket?: string | null;
+  identificacionFiscal?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ajustes_select".
+ */
+export interface AjustesSelect<T extends boolean = true> {
+  nombreComercial?: T;
+  eslogan?: T;
+  logo?: T;
+  colorPrimario?: T;
+  colorSecundario?: T;
+  telefono?: T;
+  email?: T;
+  direccion?: T;
+  instagram?: T;
+  moneda?: T;
+  simboloMoneda?: T;
+  impuestoPorcentaje?: T;
+  impuestoIncluido?: T;
+  servicioPorcentaje?: T;
+  propinasSugeridas?:
+    | T
+    | {
+        valor?: T;
+        id?: T;
+      };
+  puntosPorUnidad?: T;
+  valorPunto?: T;
+  tiempoEstimadoMinutos?: T;
+  aceptaPedidos?: T;
+  requiereAprobacionMesa?: T;
+  aforoMaximo?: T;
+  horarios?:
+    | T
+    | {
+        dia?: T;
+        abre?: T;
+        cierra?: T;
+        cerrado?: T;
+        id?: T;
+      };
+  mensajeBienvenida?: T;
+  mensajePie?: T;
+  notaServicio?: T;
+  permitirPropinaCliente?: T;
+  encabezadoTicket?: T;
+  pieTicket?: T;
+  identificacionFiscal?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

@@ -2,14 +2,41 @@ import fs from 'fs'
 import path from 'path'
 import { sqliteD1Adapter } from '@payloadcms/db-d1-sqlite'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
+import { es } from '@payloadcms/translations/languages/es'
 import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
 import { CloudflareContext, getCloudflareContext } from '@opennextjs/cloudflare'
 import { GetPlatformProxyOptions } from 'wrangler'
 import { r2Storage } from '@payloadcms/storage-r2'
 
+// Personal y accesos
 import { Users } from './collections/Users'
+import { Turnos } from './collections/Turnos'
+// Medios
 import { Media } from './collections/Media'
+// Carta y menú
+import { Categorias } from './collections/Categorias'
+import { Productos } from './collections/Productos'
+import { GruposModificadores } from './collections/GruposModificadores'
+// Salón
+import { Zonas } from './collections/Zonas'
+import { Mesas } from './collections/Mesas'
+import { SesionesMesa } from './collections/SesionesMesa'
+// Pedidos
+import { Pedidos } from './collections/Pedidos'
+// Inventario
+import { Ingredientes } from './collections/Ingredientes'
+import { Proveedores } from './collections/Proveedores'
+import { MovimientosInventario } from './collections/MovimientosInventario'
+// CRM, lealtad y marketing
+import { Clientes } from './collections/Clientes'
+import { Recompensas } from './collections/Recompensas'
+import { Cupones } from './collections/Cupones'
+import { Campanas } from './collections/Campanas'
+// Reservas
+import { Reservaciones } from './collections/Reservaciones'
+// Configuración
+import { Ajustes } from './globals/Ajustes'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -62,15 +89,46 @@ export default buildConfig({
     importMap: {
       baseDir: path.resolve(dirname),
     },
+    meta: {
+      titleSuffix: '· Mangiare',
+      description: 'Plataforma de operación para restaurantes',
+    },
   },
-  collections: [Users, Media],
+  // La interfaz del personal vive en /panel; el admin de Payload queda como
+  // respaldo técnico para depuración de datos.
+  collections: [
+    Users,
+    Turnos,
+    Media,
+    Categorias,
+    Productos,
+    GruposModificadores,
+    Zonas,
+    Mesas,
+    SesionesMesa,
+    Pedidos,
+    Ingredientes,
+    Proveedores,
+    MovimientosInventario,
+    Clientes,
+    Recompensas,
+    Cupones,
+    Campanas,
+    Reservaciones,
+  ],
+  globals: [Ajustes],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
+  i18n: {
+    supportedLanguages: { es },
+    fallbackLanguage: 'es',
+  },
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
   db: sqliteD1Adapter({ binding: cloudflare.env.D1 }),
   logger: isProduction ? cloudflareLogger : undefined,
+  telemetry: false,
   plugins: [
     r2Storage({
       bucket: cloudflare.env.R2,

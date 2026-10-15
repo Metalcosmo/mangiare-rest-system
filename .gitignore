@@ -52,3 +52,7 @@ node_modules/
 # OpenNext
 .open-next
 .wrangler
+
+# Local pnpm store/cache used when the global store is not writable
+/.pnpm-store
+/.pnpm-cache
